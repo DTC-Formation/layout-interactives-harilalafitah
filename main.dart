@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,6 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Information',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
@@ -65,10 +68,10 @@ class _MyHomePageState extends State<MyHomePage> {
     techno.forEach((key, value) {
       (value == true) ? technologies.add(key) : technologies.remove(key);
     });
-  }
+  } // Listes des technologies
 
   var hobbyCtrl = TextEditingController();
-  String? hobby;
+  String? hobby; //Hobbies
 
   double? height;
   double? weight;
@@ -76,6 +79,8 @@ class _MyHomePageState extends State<MyHomePage> {
   double? bmiResult;
   String? textCalcul;
   String? bmiConclusion;
+  double? heightInMeters;
+  double? heightInCm;
   getBmiConclusion() {
     if (height != null && weight != null) {
       bmi = weight! / (height! * height!);
@@ -89,7 +94,39 @@ class _MyHomePageState extends State<MyHomePage> {
     } else if (bmi! > 30) {
       bmiConclusion = 'You suffer of Obesity';
     }
+  } // BMI, poids et taille
+
+  double _sliderValue = 0;
+
+  String? path;
+  Future<XFile?> pickImage() async {
+    final picker = ImagePicker();
+    return await picker.pickImage(source: ImageSource.gallery);
   }
+
+  pickedFile() async {
+    final pickedFile = await pickImage();
+    if (pickedFile != null) {
+      setState(() {
+        path = pickedFile.path;
+      });
+    }
+  } //Profil image
+
+  String? pathCover;
+  Future<XFile?> pickImageCover() async {
+    final picker = ImagePicker();
+    return await picker.pickImage(source: ImageSource.gallery);
+  }
+
+  pickedFileCover() async {
+    final pickedFile = await pickImageCover();
+    if (pickedFile != null) {
+      setState(() {
+        pathCover = pickedFile.path;
+      });
+    }
+  } //Cover image
 
   @override
   Widget build(BuildContext context) {
@@ -103,16 +140,23 @@ class _MyHomePageState extends State<MyHomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Stack(
-              alignment: AlignmentDirectional.topCenter,
+              alignment: AlignmentDirectional.topStart,
               children: [
-                Image(
-                  image: const AssetImage('assets/images/basic.jpg'),
-                  fit: BoxFit.fill,
-                  width: size.width,
-                  height: 170,
-                ),
+                pathCover != null
+                    ? Image.file(
+                        File(pathCover!),
+                        fit: BoxFit.cover,
+                        width: size.width,
+                        height: 200,
+                      )
+                    : Image.asset(
+                        'assets/images/basic.jpg',
+                        fit: BoxFit.fill,
+                        width: size.width,
+                        height: 200,
+                      ), //Cover image
                 const Padding(
-                  padding: EdgeInsets.only(top: 165),
+                  padding: EdgeInsets.only(top: 195),
                   child: Divider(
                     height: 10,
                     thickness: 5,
@@ -122,15 +166,17 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(top: 100),
+                  padding: const EdgeInsets.only(top: 95, left: 20),
                   child: Container(
-                    width: 120.0,
-                    height: 120.0,
+                    width: 150.0,
+                    height: 150.0,
                     decoration: BoxDecoration(
-                      image: const DecorationImage(
-                        image: AssetImage('assets/images/Crystal.jpg'),
-                        fit: BoxFit.cover,
-                      ),
+                      image: path != null
+                          ? DecorationImage(
+                              image: FileImage(File(path!)), fit: BoxFit.cover)
+                          : const DecorationImage(
+                              image: AssetImage('assets/images/Crystal.jpg'),
+                              fit: BoxFit.cover),
                       borderRadius:
                           const BorderRadius.all(Radius.circular(100.0)),
                       border: Border.all(
@@ -139,7 +185,47 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ),
                   ),
-                ),
+                ), //Profil image
+                Padding(
+                  padding: const EdgeInsets.only(top: 185, left: 130),
+                  child: IconButton.filled(
+                    style: const ButtonStyle(
+                      backgroundColor: MaterialStatePropertyAll(Colors.black54),
+                      overlayColor: MaterialStatePropertyAll(Colors.black87),
+                    ),
+                    onPressed: () {
+                      pickedFile();
+                    },
+                    icon: const Icon(
+                      Icons.camera_alt,
+                    ),
+                  ),
+                ), //profil image button
+                Padding(
+                  padding: const EdgeInsets.only(top: 155, left: 205),
+                  child: SizedBox(
+                    height: 30,
+                    child: ElevatedButton.icon(
+                        style: ButtonStyle(
+                          backgroundColor:
+                              const MaterialStatePropertyAll(Colors.black45),
+                          foregroundColor:
+                              const MaterialStatePropertyAll(Colors.white70),
+                          overlayColor:
+                              const MaterialStatePropertyAll(Colors.black54),
+                          shadowColor:
+                              const MaterialStatePropertyAll(Colors.black45),
+                          shape: MaterialStatePropertyAll(
+                              RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(5))),
+                        ),
+                        onPressed: () {
+                          pickedFileCover();
+                        },
+                        icon: const Icon(Icons.camera_alt),
+                        label: const Text('Edit cover photo')),
+                  ),
+                ), //Cover image button
               ],
             ),
             const SizedBox(height: 30),
@@ -262,7 +348,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           children: [
                             Text.rich(
                               TextSpan(
-                                text: 'Height: ',
+                                text: 'Height(cm): ',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
@@ -283,7 +369,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             const SizedBox(width: 55),
                             Text.rich(
                               TextSpan(
-                                text: 'weight: ',
+                                text: 'weight(kg): ',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
@@ -601,26 +687,31 @@ class _MyHomePageState extends State<MyHomePage> {
                                 width: 200,
                                 child: Column(
                                   children: [
-                                    TextField(
-                                      keyboardType: TextInputType.number,
-                                      controller: tailleCtrl,
-                                      decoration: const InputDecoration(
-                                        border: OutlineInputBorder(),
-                                        labelText:
-                                            'Enter your height(in meters)',
-                                      ),
-                                      onChanged: (value) {
-                                        height = double.tryParse(value);
+                                    Slider(
+                                      value: _sliderValue,
+                                      max: 230,
+                                      divisions: 230,
+                                      label: _sliderValue.round().toString(),
+                                      onChanged: (double value) {
+                                        setState(() {
+                                          _sliderValue = value;
+                                          heightInCm = _sliderValue;
+                                        });
                                       },
+                                      activeColor: Colors.blue,
+                                      inactiveColor: Colors.grey,
                                     ),
+                                    Text(
+                                        'Height(in cm): ${heightInCm?.round().toString() ?? "n/a"}'),
                                     const SizedBox(height: 20),
                                     TextField(
                                       controller: poidsCtrl,
                                       keyboardType: TextInputType.number,
                                       decoration: const InputDecoration(
-                                        border: OutlineInputBorder(),
-                                        labelText:
-                                            'Enter your weight(in kilograms)',
+                                        border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(50))),
+                                        labelText: 'Your weight(in kg)',
                                       ),
                                       onChanged: (value) {
                                         weight = double.tryParse(value);
@@ -635,17 +726,24 @@ class _MyHomePageState extends State<MyHomePage> {
                         Column(
                           children: [
                             ElevatedButton(
+                              style: const ButtonStyle(
+                                elevation: MaterialStatePropertyAll(5),
+                              ),
                               onPressed: () {
                                 setState(() {
+                                  heightInMeters = heightInCm! / 100;
+                                  height = heightInMeters;
                                   if (height != null && weight != null) {
                                     textCalcul = 'BMI calcul done!';
+                                  } else {
+                                    textCalcul = 'Missing informations!';
                                   }
                                 });
                               },
                               child: const Text('Calculate'),
                             ),
                             Text(
-                              textCalcul ?? "Missing informations!",
+                              textCalcul ?? "Nothing yet!",
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black54,
@@ -690,37 +788,55 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
             const SizedBox(height: 30),
-            const Padding(
-              padding: EdgeInsets.only(left: 20, bottom: 35, top: 15),
-              child: Text(
-                'Click "send" when your done!',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: Colors.black54,
-                ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 35),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  const Text(
+                    'Click "send" when your done!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    style: ButtonStyle(
+                        backgroundColor:
+                            const MaterialStatePropertyAll(Colors.blueAccent),
+                        foregroundColor:
+                            const MaterialStatePropertyAll(Colors.white),
+                        overlayColor:
+                            const MaterialStatePropertyAll(Colors.blue),
+                        elevation: const MaterialStatePropertyAll(5),
+                        shape: MaterialStatePropertyAll(
+                          RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5)),
+                        )),
+                    onPressed: () {
+                      setState(() {
+                        nom = nomCtrl.text;
+                        prenom = prenomCtrl.text;
+                        getAge();
+                        hobby = hobbyCtrl.text;
+                        getCheckboxItem();
+                        gender = genderValue;
+                        taille = heightInCm!.round().toString();
+                        poids = poidsCtrl.text;
+
+                        getBmiConclusion();
+                        bmiResult = bmi;
+                      });
+                    },
+                    icon: const Icon(Icons.check_circle),
+                    label: const Text('Send'),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          setState(() {
-            nom = nomCtrl.text;
-            prenom = prenomCtrl.text;
-            getAge();
-            hobby = hobbyCtrl.text;
-            getCheckboxItem();
-            gender = genderValue;
-            taille = tailleCtrl.text;
-            poids = poidsCtrl.text;
-
-            getBmiConclusion();
-            bmiResult = bmi;
-          });
-        },
-        label: const Text('Send'),
       ),
     );
   }
